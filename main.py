@@ -2,12 +2,12 @@ __winc_id__ = "d7b474e9b3a54d23bca54879a4f1855b"
 __human_name__ = "Betsy Webshop"
 
 from models import *
+import product
+import users
 
-db.connect()
+
 db.create_tables([user,producten,in_stock,tags,transaction,user_products,tags_stock_products,tags_producten,transaction_products])
 
-
-#tags.stock_id.add(product)
 
 def search(term):
     #make a dict
@@ -50,16 +50,7 @@ def search(term):
     
 
 
-def list_user_products(user_id):
-    #make a list
-    my_list = []
-    # find the user that we want to see the products
-    gebruiker =  user.get(user.id == user_id)
-    #loop over all the products
-    for product in gebruiker.products:
-        my_list.append(product.name)
-    #return the list
-    return my_list
+
 
 
 def list_products_per_tag(tag_id):
@@ -79,65 +70,7 @@ def add_product_to_catalog(product_name, description, price_per_unit, stock):
     in_stock.create(name = product_name, description = description, price_per_unit= price_per_unit, stock = stock)
 
 
-def update_stock(product_id, new_quantity):
-    #find the product in stock
-    product  = in_stock.get(in_stock.id == product_id)
-    #save the the new quantity of stock in the variable
-    product.stock = new_quantity
-    #save the variable to the database
-    product.save()
 
-
-def purchase_product(product_id, buyer_id, quantity):
-    #search the user that want to buy the product
-    buyer = user.get(user.id == buyer_id)
-    #search the product in our stock
-    stock_product = in_stock.get(in_stock.id == product_id)
-    #check if we have enough stock
-    if stock_product.stock >= quantity:
-        #remove the ammount that the user want from the stock
-        stock_product.stock = stock_product.stock - quantity
-        #save the stock
-        stock_product.save()
-        
-        #make a new product for the user that we can add
-        product = producten.create(name = stock_product.name, description = stock_product.description, price_per_unit = stock_product.price_per_unit, ammount = quantity)
-        #add transaction
-        transaction.create(name = stock_product.name, ammount = quantity, price_of_each_product = stock_product.price_per_unit, date='2022-04-14')
-        #make a list of all the tags we need to add
-        my_list = []
-        #loop over the tags_stock_product
-        for item in tags_stock_products:
-            #check if the tags id == stock product id
-            if item.in_stock.id == stock_product.id:
-                #if so we add to the list
-                my_list.append(item.tags_id)
-        #check if list is not empty
-        if my_list:
-            #loop over the list
-            for tag in my_list:
-                #find the tag in the list
-                find_tag = tags.get(tags.id == tag)
-                find_tag.product_id.add(product)
-        #add that product to the user profile
-        buyer.products.add(product)
-    else:
-        print('not enough in stock')
-
-
-def remove_product(product_id):
-    #search the product
-    stock_product = in_stock.get(in_stock.id == product_id)
-    #find out which tags is connected to the stock
-    for item in tags_stock_products:
-        if item.in_stock_id == stock_product.id:
-            item.delete_instance()
-    #And remove that product
-    stock_product.delete_instance()
-
-def create_user(name,address,billing_information):
-    #create user
-    user.create(name = name, address = address, billing_information= billing_information)
 
 def create_tag(name, description):
     #find out if tag is already in our database
@@ -170,18 +103,37 @@ def product_add_tag(product_id, tag_id):
     tag.stock_id.add(product)
 
 
+#earning filter
+def show_revenue(date):
+    #find the selected date
+    query = transaction.select().where(transaction.date == date)
+    #if query exist
+    if query.exists():
+        #make a variable to keep track how much we have
+        revenue_counter = 0
+        #loop through the query
+        for item in query:
+            #add the amount of each product to the counter
+            revenue_counter = revenue_counter + item.price_of_each_product
+        #return the revenue
+        return round(revenue_counter,2)
+    else:
+        return 'no record found'
 
-#create_user('jef', 'Ardennenlaan 12', 'AI')
+
+#print(show_revenue('2022-04-14'))
+
 #create_tag('telefoon', 'An amazing computer')
 #product_add_tag(13,2)
 #print(list_user_products(1))
 #print(list_products_per_tag(1))
 #add_product_to_catalog('laptop', 'an amazing laptop', 100.99, 2)
-#update_stock(1,100)
-purchase_product(2,1,1)
-
-#remove_product(3)
+#product.update_stock(50,100)
+#product.purchase_product(1,1,1)
+#print(users.create_user('tomas', 'Ardennenlaan 12', 'AI'))
+#users.user_list()
+#print(users.list_user_products(1))
+product.remove_product(19,2)
 
 #find user
 #print(search("computer"))
-
