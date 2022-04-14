@@ -3,22 +3,50 @@ __human_name__ = "Betsy Webshop"
 
 from models import *
 
-db.create_tables([user,producten,in_stock,tags,user_products,tags_stock_products,tags_producten,])
+db.connect()
+db.create_tables([user,producten,in_stock,tags,transaction,user_products,tags_stock_products,tags_producten,transaction_products])
 
+
+#tags.stock_id.add(product)
 
 def search(term):
-    #make a list
-    my_list = []
-    #search in the in_stock table if there is something what that name
-    query = in_stock.select().where(in_stock.name == term)
+    #make a dict
+    my_dict = {}
+    #store all the id of the tags we find
+    store_id_tag_list =[]
+    #store a list which all the in_stock_id so we can find the product
+    store_in_stock_tag_list = []
+    #search inm the tag database for tags that contains the same name or description
+    tag_query = tags.select().where(tags.name.contains(term) | tags.description.contains(term))
+    if tag_query.exists():
+        for item in tag_query:
+            store_id_tag_list.append(item.id)
+    #loop through the tag list we created
+    for id in store_id_tag_list:
+        #search in the tags_in_stock database for the tags_id that is same as the id in our list
+        tags_in_stock_query = tags_stock_products.select().where(tags_stock_products.tags_id == id)
+        #check if it exist
+        if tags_in_stock_query.exists():
+            for item in tags_in_stock_query:
+                store_in_stock_tag_list.append(item.in_stock_id)
+    if store_in_stock_tag_list:
+        for item in store_in_stock_tag_list:
+            query = in_stock.select().where(in_stock.id == item)
+            if query.exists():
+                for result in query:
+                    my_dict[result.id] = result.name
+    #search in the in_stock table if there is something that contains the search variable
+    query = in_stock.select().where(in_stock.name.contains(term))
     #if it is found we loop over the finding else we return an error message
     if query.exists():
         for item in query:
-            my_list.append(item.name)
+            #add item to dict
+            my_dict[item.id] = item.name
+
+    if my_dict:
+        return(my_dict)
     else:
-        print('nothing found')
-        
-    print(my_list)
+        return('nothing found in our database')
     
 
 
@@ -74,9 +102,23 @@ def purchase_product(product_id, buyer_id, quantity):
         
         #make a new product for the user that we can add
         product = producten.create(name = stock_product.name, description = stock_product.description, price_per_unit = stock_product.price_per_unit, ammount = quantity)
-        #add the right tag of the stock to the product
-        for tag in stock_product.name_tags:
-            product.name_tags.add(tag)
+        #add transaction
+        transaction.create(name = stock_product.name, ammount = quantity, price_of_each_product = stock_product.price_per_unit, date='2022-04-14')
+        #make a list of all the tags we need to add
+        my_list = []
+        #loop over the tags_stock_product
+        for item in tags_stock_products:
+            #check if the tags id == stock product id
+            if item.in_stock.id == stock_product.id:
+                #if so we add to the list
+                my_list.append(item.tags_id)
+        #check if list is not empty
+        if my_list:
+            #loop over the list
+            for tag in my_list:
+                #find the tag in the list
+                find_tag = tags.get(tags.id == tag)
+                find_tag.product_id.add(product)
         #add that product to the user profile
         buyer.products.add(product)
     else:
@@ -123,22 +165,23 @@ def product_add_tag(product_id, tag_id):
     for stock in tag.stock_id:
         if stock.id == product.id:
             #if this item has this tag then we will end the function
-            print('this item has already this tag')
-            return 
+            return ('this item has already this tag')
     #add the tag to the product in our stock
     tag.stock_id.add(product)
 
+
+
 #create_user('jef', 'Ardennenlaan 12', 'AI')
 #create_tag('telefoon', 'An amazing computer')
-#product_add_tag(3,1)
+#product_add_tag(13,2)
 #print(list_user_products(1))
 #print(list_products_per_tag(1))
 #add_product_to_catalog('laptop', 'an amazing laptop', 100.99, 2)
 #update_stock(1,100)
-#purchase_product(1,1,1)
+purchase_product(2,1,1)
 
 #remove_product(3)
 
 #find user
-search("banana")
+#print(search("computer"))
 

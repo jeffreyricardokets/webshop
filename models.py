@@ -37,7 +37,17 @@ class user(BaseModel):
     billing_information = CharField()
     products = ManyToManyField(producten)
 
+
+#transaction
+class transaction(BaseModel):
+    name = CharField
+    ammount = IntegerField()
+    price_of_each_product = FloatField()
+    date = DateField()
+    product_sold = ManyToManyField(in_stock)
+
     
 user_products = user.products.get_through_model()
 tags_stock_products = tags.stock_id.get_through_model()
 tags_producten = tags.product_id.get_through_model()
+transaction_products = transaction.product_sold.get_through_model()
