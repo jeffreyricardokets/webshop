@@ -4,12 +4,13 @@ __human_name__ = "Betsy Webshop"
 from models import *
 import product
 import users
+import tags
 
 
-db.create_tables([user,producten,in_stock,tags,transaction,user_products,tags_stock_products,tags_producten,transaction_products])
+db.create_tables([user,producten,in_stock,Tags,transaction,Tag_for_stock,Tag_for_products])
 
 
-def search(term):
+"""def search(term):
     #make a dict
     my_dict = {}
     #store all the id of the tags we find
@@ -47,60 +48,15 @@ def search(term):
         return(my_dict)
     else:
         return('nothing found in our database')
-    
-
-
-
-
-
-def list_products_per_tag(tag_id):
-    #make an empty list
-    my_list = []
-    #find the tag in our database
-    tag = tags.get(tags.id == tag_id)
-    for product in tag.stock_id:
-        my_list.append(product.name)
-    return my_list
+    """
 
 
 
 #def add_product_to_catalog(user_id, product):
-def add_product_to_catalog(product_name, description, price_per_unit, stock):
+def add_product_to_catalog(product_name, description, price_per_unit, stock, tag_list):
     #create the product in our stock 
-    in_stock.create(name = product_name, description = description, price_per_unit= price_per_unit, stock = stock)
+    in_stock.create(name = product_name, description = description, price_per_unit= price_per_unit, stock = stock, tag_id = tag_list)
 
-
-
-
-def create_tag(name, description):
-    #find out if tag is already in our database
-    query = tags.select().where(tags.name == name)
-    if query.exists():
-        print('tag already exist use one with a different name')
-    else:
-    #create tag
-        tags.create(name = name, description = description)   
-
-def product_add_tag(product_id, tag_id):
-    #find product in our stock
-    try:
-        product = in_stock.get(in_stock.id == product_id)
-    except:
-        print('the product does not exist')
-        return
-    #find the tag in our tag database
-    try:
-        tag = tags.get(tags.id == tag_id)
-    except:
-        print('that tag does not exist')
-        return
-    #find out if the product already have this tag
-    for stock in tag.stock_id:
-        if stock.id == product.id:
-            #if this item has this tag then we will end the function
-            return ('this item has already this tag')
-    #add the tag to the product in our stock
-    tag.stock_id.add(product)
 
 
 #earning filter
@@ -123,17 +79,17 @@ def show_revenue(date):
 
 #print(show_revenue('2022-04-14'))
 
-#create_tag('telefoon', 'An amazing computer')
-#product_add_tag(13,2)
-#print(list_user_products(1))
+#create_tag('laptop', 'An amazing computer')
+#tags.product_add_tag(1,1)
+#print(users.list_user_products(1))
 #print(list_products_per_tag(1))
-#add_product_to_catalog('laptop', 'an amazing laptop', 100.99, 2)
+#add_product_to_catalog('PC', 'an amazing laptop', 100.99, 2,2)
 #product.update_stock(50,100)
 #product.purchase_product(1,1,1)
-#print(users.create_user('tomas', 'Ardennenlaan 12', 'AI'))
+#users.create_user('tomas', 'Ardennenlaan 12', 'AI')
 #users.user_list()
 #print(users.list_user_products(1))
-product.remove_product(19,2)
+#product.remove_product(19,2)
 
 #find user
 #print(search("computer"))

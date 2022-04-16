@@ -31,17 +31,25 @@ def user_list():
 
 #list the users product in a table
 def list_user_products(user_id):
-    # find the user that we want to see the products
-    gebruiker =  user.get(user.id == user_id)
-    #make a table
-    table = Table(title=f'The products of : {gebruiker.name}')
-    #add columns to the table
-    table.add_column('name')
-    table.add_column('description')
-    table.add_column('price per unit')
-    table.add_column('ammount')
-    #loop over all the products
-    for product in gebruiker.products:
-        table.add_row(product.name,product.description, str(product.price_per_unit), str(product.ammount))
-    console.print(table)
+    
+    #query
+    query = producten.select().join(user).where(user.id == user_id)
+    if query.exists():
+        # find the user so we can display the name
+        gebruiker =  user.get(user.id == user_id)
+        #make a table
+        table = Table(title=f'The products of : {gebruiker.name}')
+        #add columns to the table
+        table.add_column('name')
+        table.add_column('description')
+        table.add_column('price per unit')
+        table.add_column('ammount')
+        #loop over all the products
+        for product in query:
+            print(product)
+            table.add_row(product.name,product.description, str(product.price_per_unit), str(product.ammount))
+        console.print(table)
+    else:
+        print('could not find user')
+        return
 

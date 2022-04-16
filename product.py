@@ -13,28 +13,22 @@ def purchase_product(product_id, buyer_id, quantity):
         stock_product.save()
         
         #make a new product for the user that we can add
-        product = producten.create(name = stock_product.name, description = stock_product.description, price_per_unit = stock_product.price_per_unit, ammount = quantity)
+        product = producten.create(name = stock_product.name, description = stock_product.description, price_per_unit = stock_product.price_per_unit, ammount = quantity, user_id = buyer)
         #add transaction
-        transactie = transaction.create(name = stock_product.name, ammount = quantity, price_of_each_product = stock_product.price_per_unit, date='2022-04-14')
+        transaction.create(name = stock_product.name, ammount = quantity, price_of_each_product = stock_product.price_per_unit, date='2022-04-14', product_sold = stock_product)
         #make a list of all the tags we need to add
         my_list = []
         #loop over the tags_stock_product
-        for item in tags_stock_products:
-            #check if the tags id == stock product id
-            if item.in_stock.id == stock_product.id:
-                #if so we add to the list
-                my_list.append(item.tags_id)
-        #check if list is not empty
+        tags = Tag_for_stock.select().where(Tag_for_stock.stock_id == product_id)
+        if tags.exists():
+            for item in tags:
+                my_list.append(item.tag_id)
+        #remove dublicate from the list
         if my_list:
-            #loop over the list
-            for tag in my_list:
-                #find the tag in the list
-                find_tag = tags.get(tags.id == tag)
-                find_tag.product_id.add(product)
-        #add that product to the user profile
-        buyer.products.add(product)
-        #add the product to the transaction in stock database
-        transactie.product_sold.add(stock_product)
+            my_list = list(dict.fromkeys(my_list))
+            for item in my_list:
+                tag = Tags.get(Tags.id == item)
+                Tag_for_products.create(product = product, tag = tag)
     else:
         print('not enough in stock')
 
@@ -52,24 +46,20 @@ def update_stock(product_id, new_quantity):
 #remove product from user
 def remove_product(product_id,user_id):
     product_is_from_user = False
-    #find user
-    gebruiker = user.select().where(user.id == user_id)
-    #find stock
-    user_product = producten.select().where(producten.id == product_id)
-    if gebruiker.exists() & user_product.exists():
-        #check if the user owns this item
-        for item in user_products:
-            if(item.user_id == user_id & (item.producten_id == product_id)):
-                product_to_remove = producten.get(producten.id == product_id)
-                product_to_remove.delete_instance()
-                item.delete_instance()
-                return
-    else:
-        print('Error')
-        return
-    if product_is_from_user == False:
-        print('this product is not from the user')
-        return
+    #join
+    query = user.select().join(producten).where(producten.id == product_id)
+    if query.exists():
+        for item in query:
+            if item.id == user_id:
+                #find the model
+                item_to_delete = producten.get(producten.id == product_id)
+                item_to_delete.delete_instance()
+
+    product_tags = Tag_for_products.select().where(Tag_for_products.product_id == product_id)
+    for item in product_tags:
+        item.delete_instance()
 
 
     
+remove_product(76,1)
+#purchase_product(1,1,1)

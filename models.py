@@ -9,12 +9,12 @@ class BaseModel(Model):
     class Meta:
         database = db
 
-#stock
-class in_stock(BaseModel):
+
+#user
+class user(BaseModel):
     name = CharField()
-    description = CharField()
-    price_per_unit = FloatField()
-    stock = IntegerField()
+    address = CharField()
+    billing_information = CharField()
 
 #producten
 class producten(BaseModel):
@@ -22,20 +22,29 @@ class producten(BaseModel):
     description = CharField()
     price_per_unit = FloatField()
     ammount = IntegerField()
+    user = ForeignKeyField(user, backref='producten')
+
+#stock
+class in_stock(BaseModel):
+    name = CharField()
+    description = CharField()
+    price_per_unit = FloatField()
+    stock = IntegerField()
 
 #tags
-class tags(BaseModel):
+class Tags(BaseModel):
     name = CharField()
     description =  CharField()
-    stock_id = ManyToManyField(in_stock)
-    product_id = ManyToManyField(producten)
 
-#user
-class user(BaseModel):
-    name = CharField()
-    address = CharField()
-    billing_information = CharField()
-    products = ManyToManyField(producten)
+#connect tag to the stock
+class Tag_for_stock(BaseModel):
+    stock = ForeignKeyField(in_stock ,backref='tags_connection')
+    tag = ForeignKeyField(Tags ,backref='tags_connection')
+
+#connect tag to the products
+class Tag_for_products(BaseModel):
+    product = ForeignKeyField(producten ,backref='tags_connection')
+    tag = ForeignKeyField(Tags ,backref='tags_connection')
 
 
 #transaction
@@ -44,10 +53,4 @@ class transaction(BaseModel):
     ammount = IntegerField()
     price_of_each_product = FloatField()
     date = DateField()
-    product_sold = ManyToManyField(in_stock)
-
-    
-user_products = user.products.get_through_model()
-tags_stock_products = tags.stock_id.get_through_model()
-tags_producten = tags.product_id.get_through_model()
-transaction_products = transaction.product_sold.get_through_model()
+    product_sold = ForeignKeyField(in_stock)

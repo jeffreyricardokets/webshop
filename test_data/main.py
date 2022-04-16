@@ -1,47 +1,42 @@
 from peewee import *
+from model import *
 
-db = SqliteDatabase('school.db')
 
-class BaseModel(Model):
-    class Meta:
-        database = db
+def create_tables():
+    db.create_tables([
+        User,
+        Tweet,
+        Favorite])
 
-class Student(BaseModel):
-    name = CharField()
+def populate_test_data():
+    db.create_tables([User, Tweet, Favorite])
 
-class Course(BaseModel):
-    name = CharField()
-    students = ManyToManyField(Student, backref='courses')
+    data = (
+        ('huey', ('meow', 'hiss', 'purr')),
+        ('mickey', ('woof', 'whine')),
+        ('zaizee', ()))
+    for username, tweets in data:
+        user = User.create(username=username)
+        for tweet in tweets:
+            Tweet.create(user=user, content=tweet)
 
-StudentCourse = Course.students.get_through_model()
+    # Populate a few favorites for our users, such that:
+    favorite_data = (
+        ('huey', ['whine']),
+        ('mickey', ['purr']),
+        ('zaizee', ['meow', 'purr']))
+    for username, favorites in favorite_data:
+        user = User.get(User.username == username)
+        for content in favorites:
+            tweet = Tweet.get(Tweet.content == content)
+            Favorite.create(user=user, tweet=tweet)
 
-db.create_tables([
-    Student,
-    Course,
-    StudentCourse])
+user = User.get(User.id == 1)
+tweet = Tweet.get(Tweet.id == 1)
 
-# Get all classes that "huey" is enrolled in:
-huey = Student.get(Student.name == 'Huey')
-for course in huey.courses.order_by(Course.name):
-    print(course.name)
+Favorite.create(user = user ,tweet = tweet)
 
-# Get all students in "English 101":
-engl_101 = Course.get(Course.name == 'English 101')
-for student in engl_101.students:
-    print(student.name)
-
-# When adding objects to a many-to-many relationship, we can pass
-# in either a single model instance, a list of models, or even a
-# query of models:
-huey.courses.add(Course.select().where(Course.name.contains('English')))
-
-engl_101.students.add(Student.get(Student.name == 'Mickey'))
-engl_101.students.add([
-    Student.get(Student.name == 'Charlie'),
-    Student.get(Student.name == 'Zaizee')])
-
-# The same rules apply for removing items from a many-to-many:
-huey.courses.remove(Course.select().where(Course.name.startswith('CS')))
-
-engl_101.students.remove(huey)
-
+"""#simple join test
+query = Favorite.select().join(User).where(User.username == 'zaizee')
+for tweet in query:
+    print(tweet.user_id)"""
