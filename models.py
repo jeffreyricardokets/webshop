@@ -11,46 +11,46 @@ class BaseModel(Model):
 
 
 #user
-class user(BaseModel):
-    name = CharField()
+class Users(BaseModel):
+    user_id = PrimaryKeyField()
+    username = CharField()
     address = CharField()
     billing_information = CharField()
 
-#producten
-class producten(BaseModel):
-    name = CharField()
-    description = CharField()
-    price_per_unit = FloatField()
-    ammount = IntegerField()
-    user = ForeignKeyField(user, backref='producten')
+#Products
+class Products(BaseModel):
+    product_id = PrimaryKeyField()
+    product_name = CharField()
+    product_description = CharField()
+    product_price_per_unit = FloatField()
+    product_stock = IntegerField()
 
-#stock
-class in_stock(BaseModel):
-    name = CharField()
-    description = CharField()
-    price_per_unit = FloatField()
-    stock = IntegerField()
+#Orders
+class Orders(BaseModel):
+    order_id = PrimaryKeyField()
+    order_product = ForeignKeyField(Products)
+    product_ammount = IntegerField()
+    product_price = FloatField()
+    total_ammount = FloatField()
+    order_date = DateField()
+    user = ForeignKeyField(Users, backref='producten')
 
 #tags
 class Tags(BaseModel):
-    name = CharField()
-    description =  CharField()
-
-#connect tag to the stock
-class Tag_for_stock(BaseModel):
-    stock = ForeignKeyField(in_stock ,backref='tags_connection')
-    tag = ForeignKeyField(Tags ,backref='tags_connection')
+    tag_name = CharField()
+    tag_description =  CharField()
 
 #connect tag to the products
 class Tag_for_products(BaseModel):
-    product = ForeignKeyField(producten ,backref='tags_connection')
-    tag = ForeignKeyField(Tags ,backref='tags_connection')
+    product = ForeignKeyField(Products ,backref='tags_connection')
+    product_tag = ForeignKeyField(Tags ,backref='tags_connection')
+
 
 
 #transaction
-class transaction(BaseModel):
+class Transactions(BaseModel):
     name = CharField
     ammount = IntegerField()
     price_of_each_product = FloatField()
     date = DateField()
-    product_sold = ForeignKeyField(in_stock)
+    product_sold = ForeignKeyField(Products)

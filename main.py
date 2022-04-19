@@ -2,12 +2,13 @@ __winc_id__ = "d7b474e9b3a54d23bca54879a4f1855b"
 __human_name__ = "Betsy Webshop"
 
 from models import *
-import product
+import products
 import users
 import tags
+import orders
 
 
-db.create_tables([user,producten,in_stock,Tags,transaction,Tag_for_stock,Tag_for_products])
+db.create_tables([Users,Products,Orders,Tags,Transactions,Tag_for_products])
 
 
 """def search(term):
@@ -53,16 +54,16 @@ db.create_tables([user,producten,in_stock,Tags,transaction,Tag_for_stock,Tag_for
 
 
 #def add_product_to_catalog(user_id, product):
-def add_product_to_catalog(product_name, description, price_per_unit, stock, tag_list):
+def add_product_to_catalog(product_name, description, price_per_unit, stock):
     #create the product in our stock 
-    in_stock.create(name = product_name, description = description, price_per_unit= price_per_unit, stock = stock, tag_id = tag_list)
+    Products.create(product_name = product_name, product_description = description, product_price_per_unit= price_per_unit, product_stock = stock)
 
 
 
 #earning filter
 def show_revenue(date):
     #find the selected date
-    query = transaction.select().where(transaction.date == date)
+    query = Transactions.select().where(Transactions.date == date)
     #if query exist
     if query.exists():
         #make a variable to keep track how much we have
@@ -76,6 +77,16 @@ def show_revenue(date):
     else:
         return 'no record found'
 
+#make some test data
+
+def make_test_data():
+    add_product_to_catalog('laptop', 'an amazing phone', 100.99, 2)
+    add_product_to_catalog('Phone', 'an amazing phone', 100.99, 2)
+    users.create_user('tomas', 'Ardennenlaan 12', 'AI')
+    users.create_user('jeffrey', 'Ardennenlaan 12', 'AI')
+    users.create_user('Dexter', 'Ardennenlaan 12', 'AI')
+    orders.purchase_product(2,1,1)
+
 
 #print(show_revenue('2022-04-14'))
 
@@ -83,13 +94,13 @@ def show_revenue(date):
 #tags.product_add_tag(1,1)
 #print(users.list_user_products(1))
 #print(list_products_per_tag(1))
-#add_product_to_catalog('PC', 'an amazing laptop', 100.99, 2,2)
+#add_product_to_catalog('phone', 'an amazing phone', 100.99, 2)
 #product.update_stock(50,100)
-#product.purchase_product(1,1,1)
 #users.create_user('tomas', 'Ardennenlaan 12', 'AI')
 #users.user_list()
 #print(users.list_user_products(1))
 #product.remove_product(19,2)
-
+#orders.purchase_product(2,1,1)
 #find user
 #print(search("computer"))
+#make_test_data()
