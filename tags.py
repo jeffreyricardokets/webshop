@@ -15,14 +15,16 @@ def product_add_tag(product_id, tag_id):
     product_query = Products.select().where(Products.product_id == product_id)
     tag_query = Tags.select().where(Tags.id == tag_id)
     Tag_for_products_query = Tag_for_products.select()
+    
     if tag_query.exists() and product_query.exists():
         product = Products.get(Products.product_id == product_id)
         tag = Tags.get(Tags.id == tag_id)
-        for item in Tag_for_products_query:
-            print(product.id)
-            print(item.product_id == product.id)
-            print(item.product_tag_id)
-        Tag_for_products.create(product_id = product , product_tag_id = tag)
+        test_query = Tag_for_products.select().where(Tag_for_products.product_id == product.product_id ,Tag_for_products.product_tag_id == tag.id)
+        if test_query.exists():
+            print('tag already added to this product')
+        else:
+            Tag_for_products.create(product_id = product , product_tag_id = tag)
+            print('tag has been added')
     else:
         print('Error: something went wrong')
 
@@ -30,7 +32,10 @@ def list_products_per_tag(tag_id):
     #make an empty list
     my_list = []
     #find the tag in our database
-
+    
+    query = Products.select().join(Tag_for_products).where(Tag_for_products.product_tag_id == tag_id)
+    for item in query:
+        print(item.product_name)
     #set a query
     """
     query = Tag_for_products.select(Tag_for_products,producten,Tags).join(Tags , JOIN.LEFT_OUTER).switch().join(producten, JOIN.LEFT_OUTER).switch(Tags).where(Tags.id == '2').switch(producten)
@@ -48,5 +53,5 @@ def list_products_per_tag(tag_id):
     """
 
 #create_tag('laptop', 'lolol')
-product_add_tag(1,1)
-#list_products_per_tag(1)
+#product_add_tag(1,2)
+#list_products_per_tag(2)

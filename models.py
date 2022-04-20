@@ -45,12 +45,3 @@ class Tag_for_products(BaseModel):
     product = ForeignKeyField(Products ,backref='tags_connection')
     product_tag = ForeignKeyField(Tags ,backref='tags_connection')
 
-
-
-#transaction
-class Transactions(BaseModel):
-    name = CharField
-    ammount = IntegerField()
-    price_of_each_product = FloatField()
-    date = DateField()
-    product_sold = ForeignKeyField(Products)

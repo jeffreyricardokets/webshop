@@ -1,6 +1,7 @@
 __winc_id__ = "d7b474e9b3a54d23bca54879a4f1855b"
 __human_name__ = "Betsy Webshop"
 
+from os import remove
 from models import *
 import products
 import users
@@ -8,72 +9,75 @@ import tags
 import orders
 
 
-db.create_tables([Users,Products,Orders,Tags,Transactions,Tag_for_products])
+db.create_tables([Users,Products,Orders,Tags,Tag_for_products])
 
 
-"""def search(term):
-    #make a dict
-    my_dict = {}
-    #store all the id of the tags we find
-    store_id_tag_list =[]
-    #store a list which all the in_stock_id so we can find the product
-    store_in_stock_tag_list = []
-    #search inm the tag database for tags that contains the same name or description
-    tag_query = tags.select().where(tags.name.contains(term) | tags.description.contains(term))
-    if tag_query.exists():
-        for item in tag_query:
-            store_id_tag_list.append(item.id)
-    #loop through the tag list we created
-    for id in store_id_tag_list:
-        #search in the tags_in_stock database for the tags_id that is same as the id in our list
-        tags_in_stock_query = tags_stock_products.select().where(tags_stock_products.tags_id == id)
-        #check if it exist
-        if tags_in_stock_query.exists():
-            for item in tags_in_stock_query:
-                store_in_stock_tag_list.append(item.in_stock_id)
-    if store_in_stock_tag_list:
-        for item in store_in_stock_tag_list:
-            query = in_stock.select().where(in_stock.id == item)
-            if query.exists():
-                for result in query:
-                    my_dict[result.id] = result.name
-    #search in the in_stock table if there is something that contains the search variable
-    query = in_stock.select().where(in_stock.name.contains(term))
-    #if it is found we loop over the finding else we return an error message
+def search(term):
+    query = Products.select().where(Products.product_name.contains(term) |
+    Products.product_description.contains(term))
     if query.exists():
         for item in query:
-            #add item to dict
-            my_dict[item.id] = item.name
-
-    if my_dict:
-        return(my_dict)
+            print(item)
     else:
-        return('nothing found in our database')
-    """
+        print('nothing found')
+
+search('phone')
+
 
 
 
 #def add_product_to_catalog(user_id, product):
 def add_product_to_catalog(product_name, description, price_per_unit, stock):
-    #create the product in our stock 
+    product = Products.select().where(Products.product_name == product_name)
+    if product.exists():
+        print('That productname already exist do you want to put this record in the database?')
+        input_user = input('Write Y to continue and N to exit ')
+        if input_user == 'n' or input_user == 'N':
+            print('You chose the option not to make another product with the same name')
+            return
+        elif input_user == 'y' or input_user == 'Y':
+            print('You chose the option to make another product with the same name')
+        else:
+            print('you pressed the wrong key')
     Products.create(product_name = product_name, product_description = description, product_price_per_unit= price_per_unit, product_stock = stock)
 
+#Def remove product from catalog search by id
+def remove_product_from_catalog_by_id(product_id):
+    remove_products = (Products.select().where(Products.product_id == product_id))
+    if remove_products.exists():
+        delete_products(remove_products)
+    else:
+        print('product not found')
 
+#def remove product from catalog search by name mostly usefull to delete multiple objects
+def remove_product_from_catalog_by_name(product_name):
+    remove_products = (Products.select().where(Products.product_name ** product_name))
+    if remove_products.exists():
+        delete_products(remove_products)
+    else:
+        print('Product is not found')
+        return
+
+def delete_products(remove_products):
+    for product in remove_products:
+        remove_tags_from_product = Tag_for_products.select().where(Tag_for_products.product_id == product.product_id)
+        if remove_tags_from_product.exists():
+            for tag in remove_tags_from_product:
+                tag.delete_instance()
+                print('removed tag from this product')
+        else:
+            print('No tag connected to this product')
+        product.delete_instance()
+        print('deleted this product')
 
 #earning filter
 def show_revenue(date):
-    #find the selected date
-    query = Transactions.select().where(Transactions.date == date)
-    #if query exist
-    if query.exists():
-        #make a variable to keep track how much we have
+    orders = Orders.select().where(Orders.order_date == date)
+    if orders.exists():
         revenue_counter = 0
-        #loop through the query
-        for item in query:
-            #add the amount of each product to the counter
-            revenue_counter = revenue_counter + item.price_of_each_product
-        #return the revenue
-        return round(revenue_counter,2)
+        for order in orders:
+            revenue_counter = revenue_counter + order.product_price
+        return f"the revenenue from the selected date is : {round(revenue_counter,2)} euro's"
     else:
         return 'no record found'
 
@@ -87,15 +91,23 @@ def make_test_data():
     users.create_user('Dexter', 'Ardennenlaan 12', 'AI')
     orders.purchase_product(2,1,1)
 
+def add_some_product_to_catalog():
+    add_product_to_catalog('laptop', 'an amazing phone', 100.99, 2)
+    add_product_to_catalog('Phone', 'an amazing phone', 100.99, 2)
+    tags.product_add_tag(1,1)
+    tags.product_add_tag(2,1)
 
-#print(show_revenue('2022-04-14'))
 
+#add_some_product_to_catalog()
+#print(show_revenue('2022-04-20'))
+#remove_product_from_catalog_by_name('phone')
+#remove_product_from_catalog_by_id(1)
 #create_tag('laptop', 'An amazing computer')
 #tags.product_add_tag(1,1)
 #print(users.list_user_products(1))
 #print(list_products_per_tag(1))
 #add_product_to_catalog('phone', 'an amazing phone', 100.99, 2)
-#product.update_stock(50,100)
+#products.update_stock(1,200)
 #users.create_user('tomas', 'Ardennenlaan 12', 'AI')
 #users.user_list()
 #print(users.list_user_products(1))

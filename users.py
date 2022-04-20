@@ -6,50 +6,64 @@ console = Console()
 
 #create a user
 def create_user(name,address,billing_information):
-    #find if we have already a user with same username like how many websites will check it
     query = Users.select().where(Users.username == name)
     if query.exists():
         return 'Error : there is already a user with that name'
     else:
-        #create user
         Users.create(username = name, address = address, billing_information= billing_information)
 
 #list the users that we have in our database
 def user_list():
-    #make table
     table = Table(title='User List')
-    #add collums
     table.add_column('name')
     table.add_column('addres')
     table.add_column('billing information')
-    #loop over all the users
     for user in Users:
-        #add the row the the table for each user
         table.add_row(user.username, user.address, user.billing_information)
-    #print the table
     console.print(table)
 
-#list the users product in a table
-def list_user_products(user_id):
-    
-    #query
-    query = Products.select().join(Users).where(Users.user_id == user_id)
-    if query.exists():
-        # find the user so we can display the name
-        gebruiker =  Users.get(Users.user_id == user_id)
-        #make a table
-        table = Table(title=f'The products of : {gebruiker.name}')
-        #add columns to the table
-        table.add_column('name')
-        table.add_column('description')
-        table.add_column('price per unit')
-        table.add_column('ammount')
-        #loop over all the products
-        for product in query:
-            print(product)
-            table.add_row(product.name,product.description, str(product.price_per_unit), str(product.ammount))
+#list the users orders in a table
+def list_user_orders(user_id):
+    orders = (Products.select(Orders.product_ammount,Orders.order_date,Products)
+    .join(Orders, attr='orders')
+    .where(Orders.user_id == user_id))
+    if orders.exists():
+        user =  Users.get(Users.user_id == user_id)
+        table = Table(title=f'The products of : {user.username}')
+        table.add_column('Name')
+        table.add_column('Description')
+        table.add_column('Product price')
+        table.add_column('Quantity')
+        table.add_column('Total price')
+        table.add_column('Date orderd')
+        for order in orders:
+            table.add_row(order.product_name,
+            order.product_description,
+            str(order.product_price_per_unit),
+            str(order.orders.product_ammount),
+            str(order.orders.total_ammount),
+            str(order.orders.order_date))
         console.print(table)
     else:
         print('could not find user')
         return
+        
 
+def list_user_products(user_id):
+    products = (Products.select().join(Orders).where(Orders.user_id == user_id))
+    if products.exists():
+        user =  Users.get(Users.user_id == user_id)
+        table = Table(title=f'The products of : {user.username}')
+        table.add_column('Name')
+        table.add_column('Description')
+        for product in products:
+            table.add_row(product.product_name,
+            product.product_description)
+        console.print(table)
+    else:
+        print('could not find user')
+        return
+        
+
+#list_user_orders(1)
+#list_user_products(1)
