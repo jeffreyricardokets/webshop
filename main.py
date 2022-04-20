@@ -1,29 +1,52 @@
 __winc_id__ = "d7b474e9b3a54d23bca54879a4f1855b"
 __human_name__ = "Betsy Webshop"
 
-from os import remove
 from models import *
 import products
 import users
 import tags
 import orders
+import datetime
+
+from autocorrect import Speller
+
+Word = Speller(lang='en')
+
 
 
 db.create_tables([Users,Products,Orders,Tags,Tag_for_products])
 
+def add_query_item_to_list(query, tag_query, product_id_list):
+    for item in query:
+        product_id_list.append(item.product_id)
+    for item in tag_query:
+        product_id_list.append(item.product_id)
+    return product_id_list
 
-def search(term):
+#find out if the
+def run_search_query(term):
+    tag_query = Tag_for_products.select(Tag_for_products).join(Tags).where(Tags.tag_name.contains(term) |
+    Tags.tag_description.contains(term))
+    
     query = Products.select().where(Products.product_name.contains(term) |
     Products.product_description.contains(term))
-    if query.exists():
-        for item in query:
-            print(item)
+    return query, tag_query
+
+def search(term):
+    product_id_list =[]
+    query, tag_query =  run_search_query(term)
+    if (query.exists() or tag_query.exists()):
+        product_id_list = add_query_item_to_list(query, tag_query, product_id_list)
     else:
-        print('nothing found')
-
-search('phone')
-
-
+        converted_term = Word(term)
+        query, tag_query =  run_search_query(converted_term)
+        if (query.exists() or tag_query.exists()):
+            print(f'Could not find the item in the database with term {term}')
+            print(f'We searched with term {converted_term} and found the following')
+            product_id_list = add_query_item_to_list(query, tag_query, product_id_list)
+        else:
+            print('could find nothing at all')
+    products.product_list_to_table(product_id_list)        
 
 
 #def add_product_to_catalog(user_id, product):
@@ -71,13 +94,13 @@ def delete_products(remove_products):
         print('deleted this product')
 
 #earning filter
-def show_revenue(date):
-    orders = Orders.select().where(Orders.order_date == date)
+def show_revenue(first_date,second_date):
+    orders = Orders.select().where(Orders.order_date.between(first_date,second_date))
     if orders.exists():
         revenue_counter = 0
         for order in orders:
             revenue_counter = revenue_counter + order.product_price
-        return f"the revenenue from the selected date is : {round(revenue_counter,2)} euro's"
+        return f"the revenenue from the selected date's is : {round(revenue_counter,2)} euro's"
     else:
         return 'no record found'
 
@@ -99,7 +122,7 @@ def add_some_product_to_catalog():
 
 
 #add_some_product_to_catalog()
-#print(show_revenue('2022-04-20'))
+print(show_revenue('2022-04-01', '2022-04-20'))
 #remove_product_from_catalog_by_name('phone')
 #remove_product_from_catalog_by_id(1)
 #create_tag('laptop', 'An amazing computer')
